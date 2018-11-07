@@ -9,4 +9,4 @@ Types:
 - Thing
   - Like a circle; just anything that goes in a scene
  
-- Need a method that applies a Rule to a scene (a list of Things?)
+- Need a method that applies a Rule to a scene (is a scene a list of Things?)
