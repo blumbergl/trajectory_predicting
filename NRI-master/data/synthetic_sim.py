@@ -55,6 +55,9 @@ class MoveLeftSim(object):
         vel += np.random.randn(n_samples, 2, n) * self.noise_var
         return loc, vel, edges
 
+    def _energy(self, loc, vel, edges):
+            return 0
+
 
 class SpringSim(object):
     def __init__(self, n_balls=5, box_size=5., loc_std=.5, vel_norm=.5,
@@ -349,6 +352,7 @@ class ChargedParticlesSim(object):
 if __name__ == '__main__':
     sim = SpringSim()
     # sim = ChargedParticlesSim()
+    # sim = MoveLeftSim()
 
     t = time.time()
     loc, vel, edges = sim.sample_trajectory(T=5000, sample_freq=100)
@@ -363,8 +367,8 @@ if __name__ == '__main__':
     for i in range(loc.shape[-1]):
         plt.plot(loc[:, 0, i], loc[:, 1, i])
         plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
-    plt.figure()
-    energies = [sim._energy(loc[i, :, :], vel[i, :, :], edges) for i in
-                range(loc.shape[0])]
-    plt.plot(energies)
+    # plt.figure()
+    # energies = [sim._energy(loc[i, :, :], vel[i, :, :], edges) for i in
+    #             range(loc.shape[0])]
+    # plt.plot(energies)
     plt.show()
