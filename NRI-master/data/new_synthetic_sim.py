@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import matplotlib.animation as animation
 
 # Types of objects:
 # red: attract each other
@@ -20,9 +21,9 @@ class DifferentParticlesSim(object):
         self.interaction_strength = interaction_strength
         self.noise_var = noise_var
 
-        self.colors = np.zeros((self.n_balls,3))
-        self.colors[:3,1] = 1
-        self.colors[3:,2] = 1
+        arrs = np.eye(3)
+        cols = np.random.choice(3,n_balls)
+        self.colors = arrs[cols]
 
         self._delta_T = 0.001
         self._max_F = 0.1 / self._delta_T
@@ -82,7 +83,7 @@ class DifferentParticlesSim(object):
     def _get_spring_force(self, loc_next):
         dists = self._l2(loc_next.transpose(), loc_next.transpose())
 
-        forces_size = self.interaction_strength * (3 - dists)
+        forces_size = self.interaction_strength * (5 - dists)
         
         return forces_size
 
@@ -175,12 +176,23 @@ if __name__ == '__main__':
     print(colors)
     print("Simulation time: {}".format(time.time() - t))
     vel_norm = np.sqrt((vel ** 2).sum(axis=1))
-    plt.figure()
+    # plt.figure()
+    # axes = plt.gca()
+    # axes.set_xlim([-5., 5.])
+    # axes.set_ylim([-5., 5.])
+    # for i in range(loc.shape[-1]):
+    #     plt.plot(loc[:, 0, i], loc[:, 1, i])
+    #     plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
+    # plt.show()
+
+    fig2 = plt.figure()
     axes = plt.gca()
     axes.set_xlim([-5., 5.])
     axes.set_ylim([-5., 5.])
-    for i in range(loc.shape[-1]):
-        plt.plot(loc[:, 0, i], loc[:, 1, i])
-        plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
-
+    ims = []
+        
+    for i in range(loc.shape[0]):
+        im = plt.plot(loc[i, 0, :], loc[i, 1, :], 'ro')
+        ims.append(im)
+    im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
     plt.show()
