@@ -189,10 +189,14 @@ if __name__ == '__main__':
     axes = plt.gca()
     axes.set_xlim([-5., 5.])
     axes.set_ylim([-5., 5.])
+    
+    colors = ['ro','bo','go','co','mo']
     ims = []
-        
+
     for i in range(loc.shape[0]):
-        im = plt.plot(loc[i, 0, :], loc[i, 1, :], 'ro')
+        args = [[loc[i, 0, j], loc[i, 1, j], colors[j]] for j in range(loc.shape[-1])]
+        flat = [val for sublist in args for val in sublist]
+        im = plt.plot(*flat)
         ims.append(im)
     im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
     plt.show()
