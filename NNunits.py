@@ -4,7 +4,7 @@ import random
 from itertools import combinations
 
 # b/c AdamOptimizer doesn't work for me:
-Optimizer = tf.train.GradientDescentOptimizer(learning_rate = 0.005)
+Optimizer = tf.train.GradientDescentOptimizer
 sess = tf.Session()
 
 def trainNN(inputs, targetOutputs, layers, steps=100):

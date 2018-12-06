@@ -1,21 +1,13 @@
 
 
 from NNunits import sess, Optimizer, NNLayer, evalNN, trainNN
-from phizzyData import makeScene
+
 import numpy as np
 import itertools
 import tensorflow as tf
 from collections import namedtuple
 
-if __name__ == "__main__" and 0:
-    L = NNLayer(3, 4)
-
-    inputs = [[1.0,4],[2,0],[3,-1]]
-    outputs = [[4.0,0],[5,-6],[0,2],[-1,0]]
-
-    trainNN(inputs, outputs, layers = [L], steps=100)
-    print(evalNN(inputs, layers = [L]))
-
+from new_synthetic_sim import DifferentParticlesSim
 
 
 def Train(Objects, RealAccelerations, PairNet, SoloNet, steps=10):
@@ -37,34 +29,64 @@ def SomeObjects():
     PairNet = NNLayer(16, 2, "Pairwise_interactions")
     SoloNet = NNLayer(8, 2, "Solo_acceleration")
 
-def PredictedAccelerations(Objects, PairNet, SoloNet):
-    """ Outputs a dict
-        {O -> predicted acceleration on O}
-    for O in objects. """
-    def predictedAccel(i):
-        O = Objects[i]
-        otherObjects = [Objects[j] for j in range(len(Objects)) if j != i]
-        
-        colVector = O.vector
-        otherColVectors = [Q.vector for Q in otherObjects]
+def Losses(loc, vel, colors, PairNet, SoloNet):
+    # Convert everything to float32 because otherwise tf yells at me:
+    loc = np.array(loc, dtype='float32')
+    vel = np.array(vel, dtype='float32')
+    colors = np.array(colors, dtype='float32')
+    # First, use the velocity matrix to get acceleration:
+    acceleration = vel[1:,:] - vel[:-1,:]
+    # And throw away the last timestep, b/c we don't know acceleration then:
+    loc = loc[:-1,:]
+    vel = vel[:-1,:]
+    losses = []
+    for t in range(len(loc)):
+        RealAcceleration = acceleration[t]
+        # Object data at time t gets encoded into columns of this matrix:
+        ObjectData = np.vstack([loc[t], vel[t], colors.T])
+        PredictedAccels = PredictedAccelerations(ObjectData, PairNet, SoloNet)
 
-        pairVecs = [np.concatenate([colVector,ocv]) for ocv in otherColVectors]
+        loss = tf.losses.mean_squared_error(RealAcceleration,
+                                            PredictedAccels)
+        losses.append(loss)
+        print(t,end=" ")
+    return losses
         
-        # gimme column vectors
-        pairVecs = [np.concatenate([O.vector, T.vector]) for T in otherObjects]
-        return sum(PairNet(pv) for pv in pairVecs) + SoloNet(colVector)
-        
-    return [predictedAccel(i) for i in range(len(Objects))]
+
+def PredictedAccelerations(ObjectData, PairNet, SoloNet):
+    """ Outputs a 2-by-(# of objects) tensor: ith column is predicted accel
+    of ith object """
+    numObjects = ObjectData.shape[1]
+    def predictedAccel(i):
+        O = ObjectData[:,i:i+1] # get ith column vector = data of ith object
+
+        # get list of other column vectors (data of other objects):
+        otherObjects = [ObjectData[:,j:j+1]
+                        for j in range(numObjects) if j != i]
+
+        # concatenate object data to get NN input
+        pairVecs = [np.concatenate([O,Other]) for Other in otherObjects]
+        # run neural network on input, then add each acceleration:
+        return sum(PairNet(pv) for pv in pairVecs) + SoloNet(O)
+
+    predAccels = [predictedAccel(i) for i in range(numObjects)]
+    # Stack em up into the right shape (I don't get axes lol):
+    return tf.stack(predAccels,axis=2)[:,0,:]
+
 
 if __name__ == "__main__":
-    n = 3
-    O, A = makeScene(n)
-    O = np.matrix(O, dtype='float32')
-    Object = namedtuple("Object", ["vector"])
-    Scene = [Object(O[:,i]) for i in range(n)]
-    PairNet = NNLayer(16, 2, "Pair_Net")
-    SoloNet = NNLayer(8, 2, "Solo_Net")
-    PA = PredictedAccelerations(Scene, PairNet, SoloNet)
-    loss = sum(tf.losses.mean_squared_error(pai,ai) for (pai,ai) in zip(PA,A))
-    trainstep = Optimizer.minimize(loss)
+    PairNet = NNLayer(14, 2)
+    SoloNet = NNLayer(7, 2)
+
+    DSP = DifferentParticlesSim()
+    loc, vel, colors = DSP.sample_trajectory(T=100)
+    losses = Losses(loc, vel, colors, PairNet, SoloNet)
+
+    totalLoss = sum(losses)
+    trainstep = Optimizer(learning_rate=0.005).minimize(totalLoss)
+
+    print("""Time for training. The first step takes a lot longer than the
+          rest, for some reason.""")
+    # Run the following line infinitely many times:
+    sess.run([trainstep, totalLoss])
     
