@@ -3,13 +3,6 @@ import matplotlib.pyplot as plt
 import time
 import matplotlib.animation as animation
 
-# Types of objects:
-# red: attract each other
-# blue: repell each other
-# green: try to maintain a particular distance from each other (a spring b/t each one)
-# yellow: centered on x or y axis
-
-
 
 class DifferentParticlesSim(object):
     def __init__(self, n_balls=5, box_size=5., loc_std=1., vel_norm=0.5,
@@ -75,7 +68,7 @@ class DifferentParticlesSim(object):
         edges = np.ones((self.n_balls,self.n_balls))
         l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
 
-        forces_size = self.interaction_strength * edges / l2_dist_power3 * unnattract
+        forces_size = 10 * self.interaction_strength * edges / l2_dist_power3 * unnattract
         np.fill_diagonal(forces_size, 0)
 
         F = (forces_size.reshape(1, n, n) *
