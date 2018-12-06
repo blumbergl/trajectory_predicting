@@ -66,8 +66,9 @@ class DifferentParticlesSim(object):
         unnattract = outer[n:2*n,n:2*n]
 
         edges = np.ones((self.n_balls,self.n_balls))
-        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
+        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 1)
 
+        np.warnings.filterwarnings('ignore')
         forces_size = 10 * self.interaction_strength * edges / l2_dist_power3 * unnattract
         np.fill_diagonal(forces_size, 0)
 
@@ -88,8 +89,9 @@ class DifferentParticlesSim(object):
         attract = outer[:n,:n]
 
         edges = -np.ones((self.n_balls,self.n_balls))
-        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
+        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 1)
 
+        np.warnings.filterwarnings('ignore')
         forces_size = self.interaction_strength * edges / l2_dist_power3 * attract
         np.fill_diagonal(forces_size, 0)
 
