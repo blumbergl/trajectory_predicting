@@ -66,41 +66,116 @@ class DifferentParticlesSim(object):
 
         return loc, vel
 
+    # create repelling force between objects
     def _get_unnattractive_force(self, loc_next):
+        n = self.n_balls
+        outer = np.outer(self.colors.transpose(),self.colors.transpose())
+        unnattract = outer[n:2*n,n:2*n]
+
         edges = np.ones((self.n_balls,self.n_balls))
         l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
 
-        forces_size = self.interaction_strength * edges / l2_dist_power3
-        return forces_size
+        forces_size = self.interaction_strength * edges / l2_dist_power3 * unnattract
+        np.fill_diagonal(forces_size, 0)
 
+        F = (forces_size.reshape(1, n, n) *
+                 np.concatenate((
+                     np.subtract.outer(loc_next[0, :],
+                                       loc_next[0, :]).reshape(1, n, n),
+                     np.subtract.outer(loc_next[1, :],
+                                       loc_next[1, :]).reshape(1, n, n)))).sum(
+                axis=-1)
+
+        return F
+
+    # Create gravitational force between objects
     def _get_attractive_force(self, loc_next):
-        edges = -np.ones((self.n_balls,self.n_balls))
-        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
-
-        forces_size = self.interaction_strength * edges / l2_dist_power3
-        return forces_size
-
-    def _get_spring_force(self, loc_next):
-        dists = self._l2(loc_next.transpose(), loc_next.transpose())
-
-        forces_size = self.interaction_strength * (5 - dists)
-        
-        return forces_size
-
-    def _get_forces(self, loc_next):
         n = self.n_balls
         outer = np.outer(self.colors.transpose(),self.colors.transpose())
         attract = outer[:n,:n]
-        unnattract = outer[n:2*n,n:2*n]
+
+        edges = -np.ones((self.n_balls,self.n_balls))
+        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 3. / 2.)
+
+        forces_size = self.interaction_strength * edges / l2_dist_power3 * attract
+        np.fill_diagonal(forces_size, 0)
+
+        F = (forces_size.reshape(1, n, n) *
+                 np.concatenate((
+                     np.subtract.outer(loc_next[0, :],
+                                       loc_next[0, :]).reshape(1, n, n),
+                     np.subtract.outer(loc_next[1, :],
+                                       loc_next[1, :]).reshape(1, n, n)))).sum(
+                axis=-1)
+
+        return F
+
+    # Attach objects with springs
+    def _get_spring_force(self, loc_next):
+        n = self.n_balls
+        outer = np.outer(self.colors.transpose(),self.colors.transpose())
         spring = outer[2*n:3*n,2*n:3*n]
+
+        dists = self._l2(loc_next.transpose(), loc_next.transpose())
+
+        forces_size = self.interaction_strength * (5 - dists) * spring
+        np.fill_diagonal(forces_size, 0)
+
+        F = (forces_size.reshape(1, n, n) *
+                 np.concatenate((
+                     np.subtract.outer(loc_next[0, :],
+                                       loc_next[0, :]).reshape(1, n, n),
+                     np.subtract.outer(loc_next[1, :],
+                                       loc_next[1, :]).reshape(1, n, n)))).sum(
+                axis=-1)
         
-        forces_size = (self._get_attractive_force(loc_next) * attract +
-                        self._get_unnattractive_force(loc_next) * unnattract +
-                        self._get_spring_force(loc_next) * spring
-        
+        return F
+
+    # Constant force down
+    def _get_gravity_force(self, loc_next):
+        gravity = np.array([[0],[-self.interaction_strength]])
+
+        F = np.repeat(gravity, self.n_balls, axis=1)
+
+        return F
+
+    # Constant force up if above center or down if below center
+    def _get_decentering_gravity_force(self, loc_next):
+        gravity = np.array([[0],[-self.interaction_strength]])
+
+        F = np.repeat(gravity, self.n_balls, axis=1)
+        F = np.where(loc_next[1,:] < 0, F, -F)
+
+        return F
+
+    # Constant force down if above center or up if below center
+    def _get_centering_gravity_force(self, loc_next):
+        gravity = np.array([[0],[-self.interaction_strength]])
+
+        F = np.repeat(gravity, self.n_balls, axis=1)
+        F = np.where(loc_next[1,:] < 0, -F, F)
+
+        return F
+
+    # Compute all the forces on objects
+    def _get_forces(self, loc_next):        
+        F = (self._get_attractive_force(loc_next)+
+                        self._get_unnattractive_force(loc_next) +
+                        self._get_spring_force(loc_next)
                         )
-        np.fill_diagonal(forces_size, 0)  # self forces are zero (fixes division by zero)
-        return forces_size
+
+        F[F > self._max_F] = self._max_F
+        F[F < -self._max_F] = -self._max_F
+
+        return F
+
+    # Compute the velocities on all the objects
+    def _get_velocities(self, loc_next, vel_next):
+        F = self._get_forces(loc_next)
+        v = vel_next + self._delta_T * F
+
+        return v
+
 
     def sample_trajectory(self, T=10000, sample_freq=10):
         n = self.n_balls
@@ -123,20 +198,8 @@ class DifferentParticlesSim(object):
         # disables division by zero warning, since I fix it with fill_diagonal
         with np.errstate(divide='ignore'):
             # half step leapfrog
-            forces_size = self._get_forces(loc_next)
 
-            # assert (np.abs(forces_size[diag_mask]).min() > 1e-10)
-            F = (forces_size.reshape(1, n, n) *
-                 np.concatenate((
-                     np.subtract.outer(loc_next[0, :],
-                                       loc_next[0, :]).reshape(1, n, n),
-                     np.subtract.outer(loc_next[1, :],
-                                       loc_next[1, :]).reshape(1, n, n)))).sum(
-                axis=-1)
-            F[F > self._max_F] = self._max_F
-            F[F < -self._max_F] = -self._max_F
-
-            vel_next += self._delta_T * F
+            vel_next = self._get_velocities(loc_next, vel_next)
             # run leapfrog
             for i in range(1, T):
                 loc_next += self._delta_T * vel_next
@@ -146,21 +209,8 @@ class DifferentParticlesSim(object):
                     loc[counter, :, :], vel[counter, :, :] = loc_next, vel_next
                     counter += 1
 
-                forces_size = self._get_forces(loc_next)
-                np.fill_diagonal(forces_size, 0)
-                # assert (np.abs(forces_size[diag_mask]).min() > 1e-10)
+                vel_next = self._get_velocities(loc_next, vel_next)
 
-                F = (forces_size.reshape(1, n, n) *
-                     np.concatenate((
-                         np.subtract.outer(loc_next[0, :],
-                                           loc_next[0, :]).reshape(1, n, n),
-                         np.subtract.outer(loc_next[1, :],
-                                           loc_next[1, :]).reshape(1, n,
-                                                                   n)))).sum(
-                    axis=-1)
-                F[F > self._max_F] = self._max_F
-                F[F < -self._max_F] = -self._max_F
-                vel_next += self._delta_T * F
             # Add noise to observations
             loc += np.random.randn(T_save, 2, self.n_balls) * self.noise_var
             vel += np.random.randn(T_save, 2, self.n_balls) * self.noise_var
@@ -190,13 +240,13 @@ if __name__ == '__main__':
     axes.set_xlim([-5., 5.])
     axes.set_ylim([-5., 5.])
     
-    colors = ['ro','bo','go','co','mo']
+    colors = ['r','b','g','c','m']
     ims = []
 
     for i in range(loc.shape[0]):
         args = [[loc[i, 0, j], loc[i, 1, j], colors[j]] for j in range(loc.shape[-1])]
         flat = [val for sublist in args for val in sublist]
-        im = plt.plot(*flat)
+        im = plt.plot(*flat, marker='o')
         ims.append(im)
     im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
     plt.show()
