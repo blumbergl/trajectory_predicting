@@ -10,25 +10,6 @@ from collections import namedtuple
 from new_synthetic_sim import DifferentParticlesSim
 
 
-def Train(Objects, RealAccelerations, PairNet, SoloNet, steps=10):
-    # RealAccelerations must be column vectors
-    loss = sum(tf.losses.mean_squared_error(PredAccel,RealAccel)
-        for (PredAccel,RealAccel) in zip(PredAccelerations,RealAccelerations))
-    trainstep = Optimizer.minimize(loss)
-    for i in range(steps): sess.run(trainstep)
-
-def SomeObjects():
-    Object = namedtuple("Object", ["vector"])
-
-    RedBall = Object(np.array([0, 0, -1, 1.0, 1, 0, 0, 0],dtype='float32'))
-    BlueBall= Object(np.array([1, 3, 1, 0.0, 0, 1, 0, 0],dtype='float32'))
-    GreenBall=Object(np.array([-1,2,-1,-2.0, 0, 0, 1, 0],dtype='float32'))
-
-    Objects = [RedBall,BlueBall,GreenBall]
-
-    PairNet = NNLayer(16, 2, "Pairwise_interactions")
-    SoloNet = NNLayer(8, 2, "Solo_acceleration")
-
 def Losses(loc, vel, colors, PairNet, SoloNet):
     # Convert everything to float32 because otherwise tf yells at me:
     loc = np.array(loc, dtype='float32')
