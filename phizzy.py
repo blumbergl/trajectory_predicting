@@ -1,6 +1,6 @@
 
 
-from NNunits import sess, Optimizer, NNLayer, evalNN, trainNN
+from NNunits import sess, Optimizer, NN
 
 import numpy as np
 import itertools
@@ -40,6 +40,7 @@ def GetObjectData(loc, vel, colors):
 def Loss(ObjectData, RealAcceleration, PairNet, SoloNet):
     """ Loss function at time step t. """
     PredAccels = PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet)
+    RealAcceleration = 1000*RealAcceleration
     return tf.losses.mean_squared_error(RealAcceleration, PredAccels)
 
 def TotalLoss(loc, vel, colors, PairNet, SoloNet):
@@ -54,6 +55,8 @@ def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     """ Returns a tensor whose length-2 columns encode our predictions
     for the accelerations for the objects in a scene. """
     numObjects = ObjectData.shape[1]
+    if numObjects == 1: return SoloNet(ObjectData)
+    if numObjects == 0: crash # what are you doing why are there 0 objects
 
     # For each pair (i, j), we need to look at how object j affects object i.
     # So this is a list of all pairs (i, j).
@@ -79,7 +82,7 @@ def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     sparseIndices = [(i,a) for i,(a,b) in enumerate(NNinputIndexes)]
     ForceAdder = tf.sparse.SparseTensor(sparseIndices,
                                         [np.float32(1)]*len(sparseIndices),
-                                        (len(sparseIndices), 5))
+                                        (len(sparseIndices), numObjects))
     # And add 'em up:
     # TODO: Use tf.nn.embedding_lookup instead???
     R = tf.sparse.matmul(ForceAdder, PredForces, adjoint_a=True,adjoint_b=True)
@@ -88,24 +91,3 @@ def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     # Finally, get Solo accels:
     PredSoloAccel = SoloNet(ObjectData)
     return PredPairAccel + PredSoloAccel
-
-
-if __name__ == "__main__":
-    # TODO: Make these neural nets more than ONE LAYER deep.
-    PairNet = NNLayer(14, 2)
-    SoloNet = NNLayer(7, 2)
-
-    # TODO: We need multiple runs of DSP to get training data.
-    DSP = DifferentParticlesSim()
-    loc, vel, colors = DSP.sample_trajectory(T=1000)
-    loss = TotalLoss(loc, vel, colors, PairNet, SoloNet)
-
-    # If the loss function diverges wildly, decrease the learning rate.
-    # Higher learning rates mean faster learning, though.
-    trainstep = Optimizer(learning_rate=0.0005).minimize(loss)
-
-    print("""Time for training. The first step takes a lot longer than the
-          rest, for some reason.""")
-    # Run the following line infinitely many times:
-    sess.run([trainstep, loss])
-    

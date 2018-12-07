@@ -7,19 +7,21 @@ from itertools import combinations
 Optimizer = tf.train.GradientDescentOptimizer
 sess = tf.Session()
 
-def trainNN(inputs, targetOutputs, layers, steps=100):
-    realOutputs = inputs
-    for L in layers: realOutputs = L(realOutputs)
-    loss = tf.losses.mean_squared_error(realOutputs, targetOutputs)
-    trainstep = Optimizer.minimize(loss)
-    for i in range(steps):
-        NoneVal, currentLoss = sess.run([trainstep, loss])
-        if i%100 == 99: print("Iteration", i, "loss:", currentLoss)
+class NN():
+    def __init__(self, layerSizes):
+        # list of (W, bias, layer function)
+        self.layers = newNNLayers(layerSizes)
 
-def evalNN(inputs, layers):
-    realOutputs = inputs
-    for L in layers: realOutputs = L(realOutputs)
-    return sess.run(realOutputs)
+    def __call__(self, inputs):
+        outputs = inputs
+        for W, bias, layerFn in self.layers:
+            outputs = layerFn(outputs)
+        return outputs
+
+    def save(self):
+        return [(sess.run(W),sess.run(bias))
+                for W, bias, layerFn in self.layers]
+
 
 def NNLayer(inputSize, outputSize, name=None):
     if name == None: name = str(random.random())
@@ -29,7 +31,16 @@ def NNLayer(inputSize, outputSize, name=None):
     sess.run(W.initializer)
     sess.run(bias.initializer)
 
-    return lambda tensor: leakyRELU(tf.matmul(W, tensor) + bias)
+    return W, bias, lambda tensor: leakyRELU(tf.matmul(W, tensor) + bias)
+
+def newNNLayers(layerSizes, name=None):
+    if name == None: name = str(random.random())
+    layers = []
+    for i in range(len(layerSizes)-1):
+        inSize, outSize = layerSizes[i], layerSizes[i+1]
+        L = NNLayer(inSize, outSize, name = name+str(i))
+        layers.append(L)
+    return layers
 
 def leakyRELU(tensor):
     return tensor/2 + tf.nn.relu(tensor)/2
@@ -37,10 +48,9 @@ def leakyRELU(tensor):
 
 
 if __name__ == "__main__":
-    L = NNLayer(3, 4)
+    MyNet = NN([3, 4])
 
     inputs = tf.constant([[1,4],[2,0],[3,-1]], dtype='float32')
     outputs = tf.constant([[4,0],[5,-6],[0,2],[-1,0]], dtype='float32')
 
-    trainNN(inputs, outputs, layers = [L], steps=100)
-    print(evalNN(inputs, layers = [L]))
+    print(sess.run(MyNet(inputs)))
