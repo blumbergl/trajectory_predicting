@@ -13,13 +13,16 @@ class DifferentParticlesSim(object):
         self.vel_norm = vel_norm
         self.interaction_strength = interaction_strength
         self.noise_var = noise_var
-
-        arrs = np.eye(3)
-        cols = np.random.choice(3,n_balls)
-        self.colors = arrs[cols]
+        self.colors = None
 
         self._delta_T = 0.001
         self._max_F = 0.1 / self._delta_T
+
+    def _randomize_colors(self):
+        num_colors = 2
+        arrs = np.eye(num_colors)
+        cols = np.random.choice(num_colors,self.n_balls)
+        self.colors = arrs[cols]
 
     def _l2(self, A, B):
         """
@@ -164,15 +167,23 @@ class DifferentParticlesSim(object):
 
         return F
 
+    def _get_simple_gravity_forces(self, loc_next):
+        F = np.where(self.colors[:,0] == 1., self._get_centering_gravity_force(loc_next), self._get_decentering_gravity_force(loc_next))
+
+        return F
+
     # Compute the velocities on all the objects
     def _get_velocities(self, loc_next, vel_next):
-        F = self._get_forces(loc_next)
+        F = self._get_simple_gravity_forces(loc_next)
         v = vel_next + self._delta_T * F
 
         return v
 
 
     def sample_trajectory(self, T=10000, sample_freq=10):
+        
+        self._randomize_colors()
+
         n = self.n_balls
         
         assert (T % sample_freq == 0)
@@ -188,7 +199,7 @@ class DifferentParticlesSim(object):
         vel_next = np.random.randn(2, n)
         v_norm = np.sqrt((vel_next ** 2).sum(axis=0)).reshape(1, -1)
         vel_next = vel_next * self.vel_norm / v_norm
-        loc[0, :, :], vel[0, :, :] = self._clamp(loc_next, vel_next)
+        # loc[0, :, :], vel[0, :, :] = self._clamp(loc_next, vel_next)
 
         # disables division by zero warning, since I fix it with fill_diagonal
         with np.errstate(divide='ignore'):
@@ -198,7 +209,7 @@ class DifferentParticlesSim(object):
             # run leapfrog
             for i in range(1, T):
                 loc_next += self._delta_T * vel_next
-                loc_next, vel_next = self._clamp(loc_next, vel_next)
+                # loc_next, vel_next = self._clamp(loc_next, vel_next)
 
                 if i % sample_freq == 0:
                     loc[counter, :, :], vel[counter, :, :] = loc_next, vel_next
