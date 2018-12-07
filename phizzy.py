@@ -4,7 +4,7 @@ from NNunits import sess, Optimizer, NN
 
 import numpy as np
 import itertools
-import tensorflow as tfs
+import tensorflow as tf
 from collections import namedtuple
 
 from new_synthetic_sim import DifferentParticlesSim
@@ -49,7 +49,6 @@ def TotalLoss(loc, vel, colors, PairNet, SoloNet):
     for (ObjectData, RealAcceleration) in GetObjectData(loc, vel, colors):
         losses.append(Loss(ObjectData, RealAcceleration, PairNet, SoloNet))
     return sum(losses)
-
 
 def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     """ Returns a tensor whose length-2 columns encode our predictions
