@@ -50,7 +50,6 @@ def TotalLoss(loc, vel, colors, PairNet, SoloNet):
         losses.append(Loss(ObjectData, RealAcceleration, PairNet, SoloNet))
     return sum(losses)
 
-
 def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     """ Returns a tensor whose length-2 columns encode our predictions
     for the accelerations for the objects in a scene. """
