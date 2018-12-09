@@ -4,7 +4,7 @@ from NNunits import sess, Optimizer, NN
 
 import numpy as np
 import itertools
-import tensorflow as tfs
+import tensorflow as tf
 from collections import namedtuple
 
 from new_synthetic_sim import DifferentParticlesSim

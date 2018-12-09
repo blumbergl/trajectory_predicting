@@ -5,7 +5,7 @@ from NNunits import sess, Optimizer, NN
 from new_synthetic_sim import DifferentParticlesSim
 import random
 
-numColors = 3
+numColors = 2
 
 numberOfDataPoints = 100
 numberOfTrainingEpochs = 10000
@@ -38,5 +38,5 @@ except KeyboardInterrupt:
     pass
 
 # Save our juicy NNs
-do something with PairNet.save()
-do something with SoloNet.save()
+# do something with PairNet.save()
+# do something with SoloNet.save()
