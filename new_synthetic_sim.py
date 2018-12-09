@@ -19,7 +19,7 @@ class DifferentParticlesSim(object):
         self._max_F = 0.1 / self._delta_T
 
     def _randomize_colors(self):
-        num_colors = 2
+        num_colors = 3
         arrs = np.eye(num_colors)
         cols = np.random.choice(num_colors,self.n_balls)
         self.colors = arrs[cols]
@@ -174,7 +174,7 @@ class DifferentParticlesSim(object):
 
     # Compute the velocities on all the objects
     def _get_velocities(self, loc_next, vel_next):
-        F = self._get_simple_gravity_forces(loc_next)
+        F = self._get_forces(loc_next)
         v = vel_next + self._delta_T * F
 
         return v

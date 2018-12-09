@@ -13,12 +13,12 @@ parser.add_argument('--e', type=int, default=10000,
                     help='Number of epochs to train.')
 parser.add_argument('--d', type=int, default=100,
                     help='Number of data points generated for training.')
-parser.add_argument('--l', type=float, default=.001,
-                    help='The learning rate.')
+parser.add_argument('--l', type=float, default=.01,
+                    help='The learning rate.') # .1 diverges, .001 is too slow. Goldylocks likes .01.
 args = parser.parse_args()
 
 
-numColors = 2
+numColors = 3
 
 numberOfDataPoints = args.d
 numberOfTrainingEpochs = args.e
