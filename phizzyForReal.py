@@ -5,12 +5,24 @@ from NNunits import sess, Optimizer, NN
 from new_synthetic_sim import DifferentParticlesSim
 import random
 import tensorflow as tf
+import argparse
 
-numColors = 3
 
-numberOfDataPoints = 100
-numberOfTrainingEpochs = 10000
-learningRate = 0.001 # ?????? what should this be ???????
+parser = argparse.ArgumentParser()
+parser.add_argument('--e', type=int, default=10000,
+                    help='Number of epochs to train.')
+parser.add_argument('--d', type=int, default=100,
+                    help='Number of data points generated for training.')
+parser.add_argument('--l', type=int, default=.001,
+                    help='The learning rate.')
+args = parser.parse_args()
+
+
+numColors = 2
+
+numberOfDataPoints = args.d
+numberOfTrainingEpochs = args.e
+learningRate = args.l
 
 PairNet = NN([8+2*numColors, 14, 14, 2])
 SoloNet = NN([4+numColors, 8, 8, 2])
