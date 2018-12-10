@@ -2,6 +2,7 @@
 import tensorflow as tf
 import random
 from itertools import combinations
+import numpy as np
 
 # b/c AdamOptimizer doesn't work for me:
 Optimizer = tf.train.GradientDescentOptimizer
@@ -21,6 +22,26 @@ class NN():
     def save(self):
         return [(sess.run(W),sess.run(bias))
                 for W, bias, layerFn in self.layers]
+
+    def saveToFile(self, filename):
+        """ Save the NN weights to a file. Extension should be .npz. """
+        assert filename.endswith(".npz")
+        data = self.save()
+        flatData = []
+        for (a,b) in data:
+            flatData.append(a)
+            flatData.append(b)
+        np.savez(filename, *flatData)
+
+    def loadFromFile(self, filename):
+        fileData = np.load(filename)
+        filenames = sorted(fileData.files, key=lambda w:int(w[4:]))
+        dataFlat = [fileData[f] for f in filenames]
+        data = []
+        for i in range(0, len(dataFlat), 2):
+            data.append((dataFlat[i],dataFlat[i+1]))
+        assert len(data) == len(self.layers) # Save data is wrong size!
+        self.load(data)
 
     def load(self, savedData):
         for (W, bias, function),(newW,newBias) in zip(self.layers, savedData):
