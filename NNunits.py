@@ -22,6 +22,11 @@ class NN():
         return [(sess.run(W),sess.run(bias))
                 for W, bias, layerFn in self.layers]
 
+    def load(self, savedData):
+        for (W, bias, function),(newW,newBias) in zip(self.layers, savedData):
+            sess.run(tf.assign(W, newW))
+            sess.run(tf.assign(bias, newBias))
+
 
 def NNLayer(inputSize, outputSize, name=None):
     if name == None: name = str(random.random())
