@@ -11,14 +11,18 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--e', type=int, default=10000,
                     help='Number of epochs to train.')
+                    # I've usually been training with 100000, but this is a good default for a shorter test.
 parser.add_argument('--d', type=int, default=100,
                     help='Number of data points generated for training.')
+                    # Increasing this seems like a good way to increase the amount of time training takes without getting better results?
 parser.add_argument('--l', type=float, default=.01,
-                    help='The learning rate.') # .1 diverges, .001 is too slow. Goldylocks likes .01.
+                    help='The learning rate.')
+                    # Easy case: .1 diverges, .001 is too slow. Goldylocks likes .01.
+                    # Harder case: .01 diverges, but .001 gets stuck ~50 after 10000 trials.
 args = parser.parse_args()
 
 
-numColors = 3
+numColors = 2
 
 numberOfDataPoints = args.d
 numberOfTrainingEpochs = args.e
@@ -70,7 +74,7 @@ for ObjectData, RealAcceleration in GetObjectData(loc, vel, colors):
     print("And the prediction:")
     pred = sess.run(PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet)) 
     print(pred/1000)
-'''
+
 # Save our juicy NNs
-do something with PairNet.save()
-do something with SoloNet.save()'''
+PairNet.saveToFile('pair.npz')
+SoloNet.saveToFile('solo.npz')
