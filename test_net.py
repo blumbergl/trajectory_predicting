@@ -6,6 +6,7 @@ from phizzy import TotalLoss, GetObjectData, PredictedAccelerationsPacked
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--t', type=int, default=5000,
@@ -55,7 +56,6 @@ for i in range(1, T):
         NNloc[counter, :, :], NNvel[counter, :, :] = loc_next, vel_next
         counter += 1
         print(counter, '/', T/sample_freq, 'points of data')
-        tf.reset_default_graph()
 
     # TODO: Why does this line get slower and slower??? :(
     accel = sess.run(PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet)) / 1000
