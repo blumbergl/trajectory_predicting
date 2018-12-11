@@ -74,6 +74,7 @@ axes.set_ylim([-5., 5.])
 for i in range(loc.shape[-1]):
     plt.plot(loc[:, 0, i], loc[:, 1, i])
     plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
+plt.savefig('groundTruth.png')
 
 plt.figure()
 axes = plt.gca()
@@ -82,4 +83,5 @@ axes.set_ylim([-5., 5.])
 for i in range(NNloc.shape[-1]):
     plt.plot(NNloc[:, 0, i], NNloc[:, 1, i])
     plt.plot(NNloc[0, 0, i], NNloc[0, 1, i], 'd')
+plt.savefig('NNGenerated.png')
 plt.show()
