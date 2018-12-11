@@ -7,10 +7,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--t', type=int, default=5000,
+                    help='Number of epochs to train.')
+                    # I've usually been training with 100000, but this is a good default for a shorter test.
+parser.add_argument('--sf', type=int, default=100,
+                    help='Number of data points generated for training.')
+                    # Increasing this seems like a good way to increase the amount of time training takes without getting better results?
+parser.add_argument('--n', type=float, default=3,
+                    help='The learning rate.')
+                    # Easy case: .1 diverges, .001 is too slow. Goldylocks likes .01.
+                    # Harder case: .01 diverges, but .001 gets stuck ~50 after 10000 trials.
+args = parser.parse_args()
 
-T = 500
-sample_freq = 10
-n_balls = 1
+T = args.t
+sample_freq = args.sf
+n_balls = args.n
+
 
 # Load the Neural Nets
 numColors = 2
