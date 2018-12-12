@@ -74,6 +74,10 @@ for ObjectData, RealAcceleration in GetObjectData(loc, vel, colors):
     print("And the prediction:")
     pred = sess.run(PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet)) 
     print(pred/1000)
+    print("OK, here's a placeholderified way to get the prediction:")
+    PNP = PairNet.placeholdered()
+    SNP = SoloNet.placeholdered()
+    print(PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP)/1000)
 
 # Save our juicy NNs
 PairNet.saveToFile('pair.npz')
