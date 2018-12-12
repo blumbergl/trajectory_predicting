@@ -48,6 +48,26 @@ class NN():
             sess.run(tf.assign(W, newW))
             sess.run(tf.assign(bias, newBias))
 
+    def placeholdered(self):
+        """ Ok this is dumb. Returns a normal Python function, no tf or anyth,
+        that does the neural net thing. """
+        layerFns = []
+        for (W, bias, function) in self.layers:
+            W = sess.run(W)
+            bias = sess.run(bias)
+            def layerFn(M, W=W, bias=bias):
+                output = np.matmul(W,M) + bias
+                return np.maximum(output, 0)/2 + output/2
+            layerFns.append(layerFn)
+        # Ok time to compose our layers
+        def NumpyNN(M):
+            for layerFn in layerFns:
+                M = layerFn(M)
+            return M
+        return NumpyNN
+            
+            
+
 
 def NNLayer(inputSize, outputSize, name=None):
     if name == None: name = str(random.random())
