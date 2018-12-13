@@ -1,6 +1,6 @@
 
 
-from phizzy import TotalLoss, GetObjectData, PredictedAccelerationsPlaceholder
+from phizzy import TotalLoss, GetObjectData, PredictedAccelerationsPlaceholder, PredictedAccelerationsPacked
 from NNunits import sess, Optimizer, NN
 from new_synthetic_sim import DifferentParticlesSim
 import random
