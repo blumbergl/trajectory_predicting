@@ -2,14 +2,14 @@
 
 from NNunits import sess, Optimizer, NN, tf
 from new_synthetic_sim import DifferentParticlesSim
-from phizzy import TotalLoss, GetObjectData, PredictedAccelerationsPacked
+from phizzy import TotalLoss, GetObjectData, PredictedAccelerationsPlaceholder
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--t', type=int, default=5000,
+parser.add_argument('--t', type=int, default=10000,
                     help='Number of epochs to train.')
                     # I've usually been training with 100000, but this is a good default for a shorter test.
 parser.add_argument('--sf', type=int, default=100,
@@ -35,6 +35,9 @@ SoloNet = NN([4+numColors, 8, 8, 2])
 SoloNet.loadFromFile('solo.npz')
 PairNet.loadFromFile('pair.npz')
 
+SNP = SoloNet.placeholdered()
+PNP = PairNet.placeholdered()
+
 
 # Generate "Ground Truth" Case
 sim = DifferentParticlesSim(n_balls = n_balls)
@@ -56,9 +59,10 @@ for i in range(1, T):
         NNloc[counter, :, :], NNvel[counter, :, :] = loc_next, vel_next
         counter += 1
         print(counter, '/', T/sample_freq, 'points of data')
+        print(accel)
 
-    # TODO: Why does this line get slower and slower??? :(
-    accel = sess.run(PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet)) / 1000
+    # Find acceleration with our shiny nets
+    accel = PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP) / 1000
     loc_next += .001 * vel_next
     vel_next += .001 * accel
     ObjectData[:2,:] = loc_next
