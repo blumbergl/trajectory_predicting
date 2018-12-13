@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--t', type=int, default=10000,
                     help='Number of epochs to train.')
                     # I've usually been training with 100000, but this is a good default for a shorter test.
-parser.add_argument('--sf', type=int, default=100,
+parser.add_argument('--sf', type=int, default=10,
                     help='Number of data points generated for training.')
                     # Increasing this seems like a good way to increase the amount of time training takes without getting better results?
 parser.add_argument('--n', type=float, default=3,
@@ -62,7 +62,8 @@ for i in range(1, T):
         print(accel)
 
     # Find acceleration with our shiny nets
-    accel = PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP) / 1000
+    accel = PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP)
+    
     loc_next += .001 * vel_next
     vel_next += .001 * accel
     ObjectData[:2,:] = loc_next
