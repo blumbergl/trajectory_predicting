@@ -86,7 +86,44 @@ def PredictedAccelerationsPacked(ObjectData, PairNet, SoloNet):
     # TODO: Use tf.nn.embedding_lookup instead???
     R = tf.sparse.matmul(ForceAdder, PredForces, adjoint_a=True,adjoint_b=True)
     PredPairAccel = tf.transpose(R) # columns of this are length-2 vectors
-
     # Finally, get Solo accels:
     PredSoloAccel = SoloNet(ObjectData)
+    return PredPairAccel + PredSoloAccel
+
+def PredictedAccelerationsPlaceholder(ObjectData,
+                                      PairNetPlaceholder,
+                                      SoloNetPlaceholder):
+    """ Ok this is dumb but it works """
+    numObjects = ObjectData.shape[1]
+    if numObjects == 1: return SoloNet(ObjectData)
+    if numObjects == 0: crash # what are you doing why are there 0 objects
+
+    # For each pair (i, j), we need to look at how object j affects object i.
+    # So this is a list of all pairs (i, j).
+    NNinputIndexes = list(itertools.permutations(range(numObjects), 2))
+
+    def pairVec(i,j):
+        """ Gives the input to PairNet, for which the intended output is:
+        "What force does object j apply on object i?" """
+        coli = ObjectData[:,i:i+1]
+        colj = ObjectData[:,j:j+1]
+        return np.concatenate([coli, colj])
+
+    # Put our neural net inputs into columns of one big matrix:
+    PairVecs = np.hstack([pairVec(i,j) for i,j in NNinputIndexes])
+    # Apply the neural net:
+    PredForces = PairNetPlaceholder(PairVecs)
+
+    # OK, now we need to add some results -- e.g. for object 0, we need
+    # to look at the outputs for all pairs (0, 1), (0, 2), ..., to get
+    # the total predicted acceleration of object 0.
+    # We do this using one matrix multiplication.
+    # Sparse matrices, to be fast/fancy.
+    sparseIndices = [(i,a) for i,(a,b) in enumerate(NNinputIndexes)]
+    ForceAdder = np.zeros((len(sparseIndices), numObjects))
+    for (i,j) in sparseIndices: ForceAdder[i,j] = 1
+    # And add 'em up:
+    PredPairAccel = np.matmul(PredForces, ForceAdder)
+    # Finally, get Solo accels:
+    PredSoloAccel = SoloNetPlaceholder(ObjectData)
     return PredPairAccel + PredSoloAccel
