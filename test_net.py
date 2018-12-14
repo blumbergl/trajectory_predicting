@@ -32,8 +32,8 @@ numColors = 2
 PairNet = NN([8+2*numColors, 14, 14, 2])
 SoloNet = NN([4+numColors, 8, 8, 2])
 
-SoloNet.loadFromFile('solo.npz')
-PairNet.loadFromFile('pair.npz')
+SoloNet.loadFromFile('weirdlyBetterXorSolo.npz')
+PairNet.loadFromFile('weirdlyBetterXorPair.npz')
 
 SNP = SoloNet.placeholdered()
 PNP = PairNet.placeholdered()
@@ -59,7 +59,6 @@ for i in range(1, T):
         NNloc[counter, :, :], NNvel[counter, :, :] = loc_next, vel_next
         counter += 1
         print(counter, '/', T/sample_freq, 'points of data')
-        print(accel)
 
     # Find acceleration with our shiny nets
     accel = PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP)

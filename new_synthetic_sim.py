@@ -19,7 +19,7 @@ class DifferentParticlesSim(object):
         self._max_F = 0.1 / self._delta_T
 
     def _randomize_colors(self):
-        num_colors = 2
+        num_colors = 3
         arrs = np.eye(num_colors)
         cols = np.random.choice(num_colors,self.n_balls)
         self.colors = arrs[cols]
@@ -146,15 +146,6 @@ class DifferentParticlesSim(object):
 
         return F
 
-    # Constant force down if above center or up if below center
-    def _get_centering_gravity_force(self, loc_next):
-        gravity = np.array([[0],[-self.interaction_strength]])
-
-        F = np.repeat(gravity, self.n_balls, axis=1)
-        F = np.where(loc_next[1,:] < 0, -F, F)
-
-        return F
-
     # Compute all the forces on objects
     def _get_forces(self, loc_next):        
         F = (self._get_attractive_force(loc_next)+
@@ -172,11 +163,52 @@ class DifferentParticlesSim(object):
 
         return F
 
+    # these are the three forces for our user study!
+    def _get_spring_to_center_force(self, loc_next):
+        F = np.where(self.colors[:,0] == 1, - self.interaction_strength * loc_next, 0)
+
+        return F
+
+    def _get_gravity_to_other_color_force(self, loc_next):
+        n = self.n_balls
+        outer = np.outer(self.colors.transpose(),self.colors.transpose())
+        attract = np.zeros((self.n_balls,self.n_balls))
+        attract = np.where(self.colors[:,1] == 1, -self.colors[:,[2]], 0).T
+
+        edges = np.ones((self.n_balls,self.n_balls))
+        l2_dist_power3 = np.power(self._l2(loc_next.transpose(), loc_next.transpose()), 1)
+        np.fill_diagonal(l2_dist_power3, 1)
+
+        forces_size = self.interaction_strength * edges / l2_dist_power3 * attract
+
+        F = (forces_size.reshape(1, n, n) *
+                 np.concatenate((
+                     np.subtract.outer(loc_next[0, :],
+                                       loc_next[0, :]).reshape(1, n, n),
+                     np.subtract.outer(loc_next[1, :],
+                                       loc_next[1, :]).reshape(1, n, n)))).sum(
+                axis=-1)
+
+        return F
+
+    # Constant force down if above center or up if below center
+    def _get_centering_gravity_force(self, loc_next):
+        gravity = np.array([[0],[-self.interaction_strength]])
+
+        F = np.repeat(gravity, self.n_balls, axis=1)
+        F = np.where(loc_next[1,:] < 0, -F, F)
+        F = np.where(self.colors[:,2] == 1, F, 0)
+
+        return F
+
+    def _get_user_study_forces(self, loc_next):
+        return self._get_spring_to_center_force(loc_next) + self._get_gravity_to_other_color_force(loc_next) + self._get_centering_gravity_force(loc_next)
+
     # Compute the velocities on all the objects
     def _get_velocities(self, loc_next, vel_next):
         # Pick one of these forces
         # F = self._get_forces(loc_next)
-        F = self._get_simple_gravity_forces(loc_next)
+        F = self._get_user_study_forces(loc_next)
         
         v = vel_next + self._delta_T * F
 
@@ -230,7 +262,7 @@ if __name__ == '__main__':
     sim = DifferentParticlesSim()
 
     t = time.time()
-    loc, vel, colors = sim.sample_trajectory(T=5000, sample_freq=100)
+    loc, vel, colors = sim.sample_trajectory(T=10000, sample_freq=100)
 
     print(colors)
     print("Simulation time: {}".format(time.time() - t))
@@ -249,11 +281,11 @@ if __name__ == '__main__':
     axes.set_xlim([-5., 5.])
     axes.set_ylim([-5., 5.])
     
-    colors = ['r','b','g','c','m']
+    colors_indexed = np.where(colors[:,0],'r',np.where(colors[:,1],'g','b'))
     ims = []
 
     for i in range(loc.shape[0]):
-        args = [[loc[i, 0, j], loc[i, 1, j], colors[j]] for j in range(loc.shape[-1])]
+        args = [[loc[i, 0, j], loc[i, 1, j], colors_indexed[j]] for j in range(loc.shape[-1])]
         flat = [val for sublist in args for val in sublist]
         im = plt.plot(*flat, marker='o')
         ims.append(im)
