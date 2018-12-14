@@ -27,13 +27,13 @@ n_balls = args.n
 
 
 # Load the Neural Nets
-numColors = 2
+numColors = 3
 
 PairNet = NN([8+2*numColors, 14, 14, 2])
 SoloNet = NN([4+numColors, 8, 8, 2])
 
-SoloNet.loadFromFile('weirdlyBetterXorSolo.npz')
-PairNet.loadFromFile('weirdlyBetterXorPair.npz')
+SoloNet.loadFromFile('solo.npz')
+PairNet.loadFromFile('pair.npz')
 
 SNP = SoloNet.placeholdered()
 PNP = PairNet.placeholdered()

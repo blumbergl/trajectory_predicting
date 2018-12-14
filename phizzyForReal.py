@@ -22,7 +22,7 @@ parser.add_argument('--l', type=float, default=.01,
 args = parser.parse_args()
 
 
-numColors = 2
+numColors = 3
 
 numberOfDataPoints = args.d
 numberOfTrainingEpochs = args.e
