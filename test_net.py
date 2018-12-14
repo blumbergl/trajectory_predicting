@@ -63,7 +63,7 @@ for i in range(1, T):
 
     # Find acceleration with our shiny nets
     accel = PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP)
-    
+
     loc_next += .001 * vel_next
     vel_next += .001 * accel
     ObjectData[:2,:] = loc_next
