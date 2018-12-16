@@ -22,7 +22,7 @@ parser.add_argument('--l', type=float, default=.01,
 args = parser.parse_args()
 
 
-numColors = 3
+numColors = 2
 
 numberOfDataPoints = args.d
 numberOfTrainingEpochs = args.e
@@ -80,5 +80,5 @@ for ObjectData, RealAcceleration in GetObjectData(loc, vel, colors):
     print(PredictedAccelerationsPlaceholder(ObjectData, PNP, SNP)/1000)
 
 # Save our juicy NNs
-PairNet.saveToFile('pair.npz')
-SoloNet.saveToFile('solo.npz')
+PairNet.saveToFile('attractivePair.npz')
+SoloNet.saveToFile('attractiveSolo.npz')

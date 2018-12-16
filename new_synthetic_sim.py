@@ -19,12 +19,13 @@ class DifferentParticlesSim(object):
         self._max_F = 0.1 / self._delta_T
 
     def _randomize_colors(self):
-        num_colors = 2
-        arrs = np.eye(num_colors)
-        cols = np.random.choice(num_colors,self.n_balls)
-        self.colors = arrs[cols]
+        # num_colors = 2
+        # arrs = np.eye(num_colors)
+        # cols = np.random.choice(num_colors,self.n_balls)
+        # self.colors = arrs[cols]
 
         # self.colors = np.eye(3)
+        self.colors = np.repeat(np.array([[1,0]]), self.n_balls, axis=0)
         
         # self.colors = np.ones((self.n_balls,2))         
 
@@ -222,7 +223,8 @@ class DifferentParticlesSim(object):
         # Pick one of these forces
         # F = self._get_forces(loc_next)
         # F = self._get_user_study_forces(loc_next)
-        F = self._get_simple_gravity_forces(loc_next)
+        # F = self._get_simple_gravity_forces(loc_next)
+        F = self._get_attractive_force(loc_next)
         
         v = vel_next + self._delta_T * F
 
@@ -306,4 +308,5 @@ if __name__ == '__main__':
     #     im = plt.plot(*flat, marker='o')
     #     ims.append(im)
     # im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
+    # im_ani.save('easy.gif', writer='imagemagick', fps=60)
     # plt.show()

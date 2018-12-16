@@ -32,8 +32,8 @@ numColors = 2
 PairNet = NN([8+2*numColors, 14, 14, 2])
 SoloNet = NN([4+numColors, 8, 8, 2])
 
-SoloNet.loadFromFile('weirdlyBetterXorSolo.npz')
-PairNet.loadFromFile('weirdlyBetterXorPair.npz')
+SoloNet.loadFromFile('attractiveSolo.npz')
+PairNet.loadFromFile('attractivePair.npz')
 
 SNP = SoloNet.placeholdered()
 PNP = PairNet.placeholdered()
@@ -72,16 +72,16 @@ for i in range(1, T):
 print(colors)
 colors_indexed = np.where(colors[:,0],'r',np.where(colors[:,1],'b','g'))
 
-plt.figure()
-axes = plt.gca()
-axes.set_xlim([-5., 5.])
-axes.set_ylim([-5., 5.])
-for i in range(loc.shape[-1]):
-    origin = loc[0, 0, i], loc[0, 1, i]
-    v = vel[0, 0, i], vel[0, 1, i]
-    plt.quiver(*origin, *v, color=colors_indexed[i])
-    plt.plot(loc[0, 0, i], loc[0, 1, i], colors_indexed[i]+'d')
-plt.savefig('blank.png')
+# plt.figure()
+# axes = plt.gca()
+# axes.set_xlim([-5., 5.])
+# axes.set_ylim([-5., 5.])
+# for i in range(loc.shape[-1]):
+#     origin = loc[0, 0, i], loc[0, 1, i]
+#     v = vel[0, 0, i], vel[0, 1, i]
+#     plt.quiver(*origin, *v, color=colors_indexed[i])
+#     plt.plot(loc[0, 0, i], loc[0, 1, i], colors_indexed[i]+'d')
+# plt.savefig('blank.png')
 
 plt.figure()
 axes = plt.gca()
