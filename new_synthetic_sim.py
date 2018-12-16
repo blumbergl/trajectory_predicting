@@ -19,10 +19,14 @@ class DifferentParticlesSim(object):
         self._max_F = 0.1 / self._delta_T
 
     def _randomize_colors(self):
-        num_colors = 3
+        num_colors = 2
         arrs = np.eye(num_colors)
         cols = np.random.choice(num_colors,self.n_balls)
         self.colors = arrs[cols]
+
+        # self.colors = np.eye(3)
+        
+        # self.colors = np.ones((self.n_balls,2))         
 
     def _l2(self, A, B):
         """
@@ -146,6 +150,15 @@ class DifferentParticlesSim(object):
 
         return F
 
+    # Constant force down if above center or up if below center
+    def _get_center_gravity_force(self, loc_next):
+        gravity = np.array([[0],[-self.interaction_strength]])
+
+        F = np.repeat(gravity, self.n_balls, axis=1)
+        F = np.where(loc_next[1,:] < 0, -F, F)
+
+        return F
+
     # Compute all the forces on objects
     def _get_forces(self, loc_next):        
         F = (self._get_attractive_force(loc_next)+
@@ -159,8 +172,8 @@ class DifferentParticlesSim(object):
         return F
 
     def _get_simple_gravity_forces(self, loc_next):
-        F = np.where(self.colors[:,0] == 1., self._get_centering_gravity_force(loc_next), self._get_decentering_gravity_force(loc_next))
-
+        F = np.where(self.colors[:,0] == 1., self._get_center_gravity_force(loc_next), self._get_decentering_gravity_force(loc_next))
+        # F = self._get_center_gravity_force(loc_next) + self._get_decentering_gravity_force(loc_next)
         return F
 
     # these are the three forces for our user study!
@@ -208,7 +221,8 @@ class DifferentParticlesSim(object):
     def _get_velocities(self, loc_next, vel_next):
         # Pick one of these forces
         # F = self._get_forces(loc_next)
-        F = self._get_user_study_forces(loc_next)
+        # F = self._get_user_study_forces(loc_next)
+        F = self._get_simple_gravity_forces(loc_next)
         
         v = vel_next + self._delta_T * F
 
@@ -259,7 +273,7 @@ class DifferentParticlesSim(object):
 
 
 if __name__ == '__main__':
-    sim = DifferentParticlesSim()
+    sim = DifferentParticlesSim(n_balls=3)
 
     t = time.time()
     loc, vel, colors = sim.sample_trajectory(T=10000, sample_freq=100)
@@ -267,27 +281,29 @@ if __name__ == '__main__':
     print(colors)
     print("Simulation time: {}".format(time.time() - t))
     vel_norm = np.sqrt((vel ** 2).sum(axis=1))
-    # plt.figure()
-    # axes = plt.gca()
-    # axes.set_xlim([-5., 5.])
-    # axes.set_ylim([-5., 5.])
-    # for i in range(loc.shape[-1]):
-    #     plt.plot(loc[:, 0, i], loc[:, 1, i])
-    #     plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
-    # plt.show()
+    
+    colors_indexed = np.where(colors[:,0],'r',np.where(colors[:,1],'b','g'))
 
-    fig2 = plt.figure()
+    plt.figure()
     axes = plt.gca()
     axes.set_xlim([-5., 5.])
     axes.set_ylim([-5., 5.])
-    
-    colors_indexed = np.where(colors[:,0],'r',np.where(colors[:,1],'g','b'))
-    ims = []
-
-    for i in range(loc.shape[0]):
-        args = [[loc[i, 0, j], loc[i, 1, j], colors_indexed[j]] for j in range(loc.shape[-1])]
-        flat = [val for sublist in args for val in sublist]
-        im = plt.plot(*flat, marker='o')
-        ims.append(im)
-    im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
+    for i in range(loc.shape[-1]):
+        plt.plot(loc[:, 0, i], loc[:, 1, i], colors_indexed[i])
+        plt.plot(loc[0, 0, i], loc[0, 1, i], colors_indexed[i]+'d')
     plt.show()
+
+    # fig2 = plt.figure()
+    # axes = plt.gca()
+    # axes.set_xlim([-5., 5.])
+    # axes.set_ylim([-5., 5.])
+    
+    # ims = []
+
+    # for i in range(loc.shape[0]):
+    #     args = [[loc[i, 0, j], loc[i, 1, j], colors_indexed[j]] for j in range(loc.shape[-1])]
+    #     flat = [val for sublist in args for val in sublist]
+    #     im = plt.plot(*flat, marker='o')
+    #     ims.append(im)
+    # im_ani = animation.ArtistAnimation(fig2, ims, interval=50, repeat_delay=3000)
+    # plt.show()

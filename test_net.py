@@ -10,13 +10,13 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--t', type=int, default=10000,
-                    help='Number of epochs to train.')
+                    help='Number of timesteps.')
                     # I've usually been training with 100000, but this is a good default for a shorter test.
 parser.add_argument('--sf', type=int, default=10,
-                    help='Number of data points generated for training.')
+                    help='Sampling frequency.')
                     # Increasing this seems like a good way to increase the amount of time training takes without getting better results?
 parser.add_argument('--n', type=float, default=3,
-                    help='The learning rate.')
+                    help='Number of balls.')
                     # Easy case: .1 diverges, .001 is too slow. Goldylocks likes .01.
                     # Harder case: .01 diverges, but .001 gets stuck ~50 after 10000 trials.
 args = parser.parse_args()
@@ -27,13 +27,13 @@ n_balls = args.n
 
 
 # Load the Neural Nets
-numColors = 3
+numColors = 2
 
 PairNet = NN([8+2*numColors, 14, 14, 2])
 SoloNet = NN([4+numColors, 8, 8, 2])
 
-SoloNet.loadFromFile('solo.npz')
-PairNet.loadFromFile('pair.npz')
+SoloNet.loadFromFile('weirdlyBetterXorSolo.npz')
+PairNet.loadFromFile('weirdlyBetterXorPair.npz')
 
 SNP = SoloNet.placeholdered()
 PNP = PairNet.placeholdered()
@@ -70,14 +70,26 @@ for i in range(1, T):
 
 # Create Visuals!
 print(colors)
+colors_indexed = np.where(colors[:,0],'r',np.where(colors[:,1],'b','g'))
 
 plt.figure()
 axes = plt.gca()
 axes.set_xlim([-5., 5.])
 axes.set_ylim([-5., 5.])
 for i in range(loc.shape[-1]):
-    plt.plot(loc[:, 0, i], loc[:, 1, i])
-    plt.plot(loc[0, 0, i], loc[0, 1, i], 'd')
+    origin = loc[0, 0, i], loc[0, 1, i]
+    v = vel[0, 0, i], vel[0, 1, i]
+    plt.quiver(*origin, *v, color=colors_indexed[i])
+    plt.plot(loc[0, 0, i], loc[0, 1, i], colors_indexed[i]+'d')
+plt.savefig('blank.png')
+
+plt.figure()
+axes = plt.gca()
+axes.set_xlim([-5., 5.])
+axes.set_ylim([-5., 5.])
+for i in range(loc.shape[-1]):
+    plt.plot(loc[:, 0, i], loc[:, 1, i], colors_indexed[i])
+    plt.plot(loc[0, 0, i], loc[0, 1, i], colors_indexed[i]+'d')
 plt.savefig('groundTruth.png')
 
 plt.figure()
@@ -85,7 +97,7 @@ axes = plt.gca()
 axes.set_xlim([-5., 5.])
 axes.set_ylim([-5., 5.])
 for i in range(NNloc.shape[-1]):
-    plt.plot(NNloc[:, 0, i], NNloc[:, 1, i])
-    plt.plot(NNloc[0, 0, i], NNloc[0, 1, i], 'd')
+    plt.plot(NNloc[:, 0, i], NNloc[:, 1, i], colors_indexed[i])
+    plt.plot(NNloc[0, 0, i], NNloc[0, 1, i], colors_indexed[i]+'d')
 plt.savefig('NNGenerated.png')
 plt.show()
